@@ -13,7 +13,8 @@ intents.message_content = True
 intents.members = True
 
 client = Bot(command_prefix="cb!", intents=intents)
-startup_extensions = ["cogs.count", 'cogs.countv2']
+# "cogs.count",
+startup_extensions = [ 'cogs.countv2']
 
 
 async def on_ready():
