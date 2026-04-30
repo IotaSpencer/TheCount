@@ -401,18 +401,6 @@ class CountingCog(commands.Cog):
                     return answers
 
 
-
-    @commands.command()
-    async def wolframalpha(self, ctx, *expression):
-        # message = str(await self.solve_wolframalpha(" ".join(expression)))
-        # if message in ("", "None"):
-        #     message = "[Empty output]"
-        message = """As of 3/19/2022, 8:30 PM CEST, the c#wolframalpha command has been disabled to prevent it from being overused and single-handedly using up the API key.
-
-        From now on, please use the official Wolfram|Alpha website.
-        https://wolframalpha.com/"""
-        await ctx.reply(message)
-
     def parse_and_evaluate_expression(self, expression):
         result = self.evaluator.eval(expression)
         str(result)  # Make sure it can be represented
@@ -422,32 +410,9 @@ class CountingCog(commands.Cog):
         result = int(input, 2)
         return result
 
-    @commands.slash_command()
-    async def expr(self, ctx, *expression):
-        try:
-            output = self.evaluator.eval(" ".join(expression))
-            if type(output) not in [int, float]:
-                await ctx.reply("I know the answer, and it's not a number.")
-                return
-            message = str(output)
-        except ArithmeticError:
-            await ctx.reply("ArithmeticError: " + expression + " is not a valid or safe expression.")
-        except (simpleeval.InvalidExpression, KeyError):
-            await ctx.reply("I'm not evaluating that.")
-        except Exception as e:
-            await ctx.reply(f"Error: `{repr(e)}`\n\n-# (This is probably not a bug)")
-        else:
-            if message in ("", "None"):
-                message = "[Empty output]"
-            await ctx.reply(message)
 
-    @bridge.bridge_command()
-    async def binary(self, ctx, bin_input):
-        result = self.parse_and_convert_binary(bin_input)
-        await ctx.reply(f"'{bin_input}' (base2) is '{result}' (base10)")
-
-    @bridge.bridge_command(aliases=['channels'])
-    async def channel(self, ctx, operator, value=0):
+    @bridge.bridge_command(aliases=['chans'])
+    async def chan(self, ctx, operator, value=0):
         """Perform operations on this channel
         Possible operators are:
         Add
