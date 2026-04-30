@@ -400,15 +400,7 @@ class CountingCog(commands.Cog):
                         answers.append(subpod.plaintext)
                     return answers
 
-    @commands.command()
-    async def legend(self, ctx):
-        await ctx.reply("""
-        `###` are any numbers/digits
-        `b|###` - Binary input (b|101 = 5)
-        `2*2` - Expression evaluation
-        `w|expression` - WolframAlpha query (disabled)
-        `###` - Regular counting by integer or float 
-        """)
+
 
     @commands.command()
     async def wolframalpha(self, ctx, *expression):
