@@ -75,7 +75,7 @@ class CountingCogv2(commands.Cog):
 
     async def admin_check(self, ctx):
         try:
-            if not ctx.message.author.guild_permissions.administrator:
+            if not ctx.author.guild_permissions.administrator:
                 await ctx.reply("You're not an administrator, sorry!")
                 return False
         except AttributeError:
