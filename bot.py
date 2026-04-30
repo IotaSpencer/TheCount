@@ -34,7 +34,7 @@ async def on_ready():
 
 @client.command()
 async def load(ctx, string):
-    if ctx.author.id != Cfg().bot_config.bot.owner_id: return
+    if ctx.author.id not in Cfg().bot_config.bot.owner_ids: return
     string = 'cogs.' + string
     try:
         client.load_extension(string)
@@ -51,7 +51,7 @@ async def load(ctx, string):
 
 @client.command()
 async def unload(ctx, string):
-    if ctx.author.id != Cfg().bot_config.bot.owner_id: return
+    if ctx.author.id not in Cfg().bot_config.bot.owner_ids: return
     string = 'cogs.' + string
     try:
         client.unload_extension(string)
@@ -67,7 +67,7 @@ async def unload(ctx, string):
 
 @client.command()
 async def reload(ctx, string):
-    if ctx.author.id != Cfg().bot_config.bot.owner_id: return
+    if ctx.author.id not in Cfg().bot_config.bot.owner_ids: return
     string = 'cogs.' + string
     try:
         client.unload_extension(string)
