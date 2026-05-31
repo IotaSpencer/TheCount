@@ -1,3 +1,4 @@
+#! /home/ken/.virtualenvs/TheCount/bin/python3.12
 from logger import logger
 from config import Cfg
 import discord
@@ -14,7 +15,7 @@ intents.members = True
 
 client = Bot(command_prefix="cb!", intents=intents)
 # "cogs.count",
-startup_extensions = [ 'cogs.countv2']
+startup_extensions = [ 'cogs.count']
 
 
 async def on_ready():

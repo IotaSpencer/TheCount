@@ -18,16 +18,14 @@ from discord.ext.bridge import bridge_command
 
 from config import Cfg
 from logger import logger
+import db
 
 
 class CountingCog(commands.Cog):
     def __init__(self, client):
         self.client = client
         self.wolframalphaclient = wolframalpha.Client(Cfg().bot_config.tokens.wa_app_id)
-        for folder in ['channels', 'highscores', 'streakrankability']:
-            if not os.path.isdir(folder):
-                os.mkdir(folder)
-        self.channels = os.listdir('channels')
+        # Using DB-backed storage; no local folders are created.
         self.evaluator = simpleeval.SimpleEval(
             functions={
                 'sqrt': lambda x: sqrt(x),
@@ -35,7 +33,7 @@ class CountingCog(commands.Cog):
                 'sq': lambda x: pow(x, 2),
                 'cb': lambda x: pow(x, 3),
                 'floor': lambda x: floor(x),
-                'abs': lambda x: fabs(x),
+                'abs': lambda x: abs(x),
                 'ceil': lambda x: ceil(x)
             },
             names={'e': math.e},
@@ -73,124 +71,67 @@ class CountingCog(commands.Cog):
         sys.set_int_max_str_digits(1024)
 
     def is_channel_registered(self, channelid):
-        return str(channelid) in self.channels
+        return db.is_channel_registered(channelid)
 
     async def admin_check(self, ctx):
-        try:
-            if not ctx.message.author.guild_permissions.administrator:
-                await ctx.reply("You're not an administrator, sorry!")
-                return False
-        except AttributeError:
-            await ctx.reply("I couldn't access your permissions! Are you in a server?")
-            return False
-        else:
-            return True
+        return await db.admin_check(ctx)
 
     async def channel_check(self, ctx):
         if self.is_channel_registered(ctx.channel.id):
             return True
-        else:
-            await ctx.reply("This channel has not been registered!")
-            return False
+        await ctx.reply("This channel has not been registered!")
+        return False
 
 
     def get_channel_data(self, channelid, ForceIntegerConversions=True):
-        with open("channels/" + str(channelid), "r") as file:
-            data = file.read().split("|")
-            if ForceIntegerConversions:
-                return int(data[0]), int(data[1]), int(data[2])
-            else:
-                return float(data[0]), int(data[1]), int(data[2])
+        return db.get_channel_data(channelid, ForceIntegerConversions)
 
     def set_channel_data(self, channelid, counter, userid, timescounted):
-        with open("channels/" + str(channelid), "w") as file:
-            file.write(f"{counter}|{userid}|{timescounted}")
+        return db.set_channel_data(channelid, counter, userid, timescounted)
 
     def get_channel_highscore(self, channelid):
-        with open("highscores/" + str(channelid), "r") as file:
-            return int(file.read())
+        return db.get_channel_highscore(channelid)
 
     def set_channel_highscore(self, channelid, counter):
-        with open("highscores/" + str(channelid), "w") as file:
-            file.write(f"{counter}")
+        return db.set_channel_highscore(channelid, counter)
 
     def get_default_settings(self):
-        with open("settings/default.json", "r") as file:
-            return json.load(file)
+        return db.get_default_settings()
 
     def get_channel_settings(self, channelid):
-        filepath = "settings/" + str(channelid) + ".json"
-        if not os.path.exists(filepath):
-            filepath = "settings/default.json"
-        settings = self.get_default_settings()
-        with open(filepath, "r") as file:
-            settings.update(json.load(file))
-            return settings
+        return db.get_channel_settings(channelid)
 
     def set_channel_setting(self, channelid, key, value):
-        if value.lower().removeprefix("-") in ("nan", "inf", "infinity"):
-            raise ValueError("No.")
-        filepath = "settings/" + str(channelid) + ".json"
-        if not os.path.exists(filepath):
-            filepath = "settings/default.json"
-        with open(filepath, "r") as file:
-            settings = json.load(file)
-        defaultsettings = self.get_default_settings()
-        if not key in defaultsettings.keys():
-            raise KeyError("Setting not found")
-        writepath = "settings/" + str(channelid) + ".json"
-        valuetype = type(defaultsettings[key])
-        if valuetype in (int, float):
-            number = float(value)
-            if number.is_integer():
-                number = int(number)
-            settings.update({key: number})
-        elif valuetype == bool:
-            istrue = value.lower() in ["1", "true", "yes"]
-            settings.update({key: istrue})
-        else:  # str & others
-            settings.update({key: value})
-        filepath = "settings/" + str(channelid) + ".json"
-        with open(filepath, "w") as file:
-            return json.dump(settings, file)
+        try:
+            return db.set_channel_setting(channelid, key, value)
+        except KeyError:
+            raise
+        except Exception as e:
+            raise
 
     def get_channel_rankability(self, channelid):
-        try:
-            with open("streakrankability/" + str(channelid), "r") as file:
-                return bool(int(file.read()))
-        except FileNotFoundError:
-            self.set_channel_rankability(channelid, False)
-            return False
+        return db.get_channel_rankability(channelid)
 
     def set_channel_rankability(self, channelid, rankability):
-        with open("streakrankability/" + str(channelid), "w") as file:
-            file.write(str(int(rankability)))
+        return db.set_channel_rankability(channelid, rankability)
 
     def check_setting_rankability(self, channelid):
-        return self.get_channel_settings(channelid) == self.get_default_settings()
+        return db.check_setting_rankability(channelid)
 
     def reset_channel_rankability(self, channelid):
-        are_settings_rankable = self.check_setting_rankability(channelid)
-        self.set_channel_rankability(channelid, are_settings_rankable)
+        return db.reset_channel_rankability(channelid)
 
     def reset_streak(self, channelid):
-        settings = self.get_channel_settings(channelid)
-        self.set_channel_data(channelid, settings["StartingNumber"], 0, 0)
-        self.reset_channel_rankability(channelid)
+        return db.reset_streak(channelid)
 
     def reset_config(self, channelid):
-        try:
-            os.remove("settings/" + str(channelid) + ".json")
-        except FileNotFoundError:
-            pass
+        return db.reset_config(channelid)
 
     def get_leaderboards(self):
-        with open("leaderboards.json", "r") as file:
-            return json.load(file)
+        return db.get_leaderboards()
 
     def set_leaderboards(self, data):
-        with open("leaderboards.json", "w") as file:
-            return json.dump(data, file)
+        return db.set_leaderboards(data)
     def get_lowest_score_channel_id_from_scores(self, scores):
         lowestcandidate = None
         lowestscore = float("inf")
@@ -241,14 +182,7 @@ class CountingCog(commands.Cog):
         await message.channel.send(self.get_displayable_leaderboard_format(leaderboards["scores"]))
         await recalcmessage.delete()
 
-    @commands.Cog.listener()
-    async def on_message(self, message):
-        if message.author.id == self.client.user.id:
-            return
-        if message.content.startswith('cb!'):
-            if message.author.id not in Cfg().bot_config.bot.owner_ids or message.author.id not in Cfg().bot_config.bot.tester_ids:
-                message.reply(content=f"""Hello, {message.author.mention}, the bot is under maintenance, and may not work correctly.
-                """)
+
     @commands.Cog.listener()
     async def on_message(self, message):
         if message.author.bot:
@@ -421,35 +355,29 @@ class CountingCog(commands.Cog):
         List"""
         if not await self.admin_check(ctx): return
         if operator == "add":
-            with open("channels/" + str(ctx.channel.id), "w") as file:
-                file.write("0|0")
             if self.is_channel_registered(ctx.channel.id):
                 await ctx.reply("Channel has already been added!")
                 return
             self.set_channel_data(ctx.channel.id, 0, 0, 0)
             self.set_channel_highscore(ctx.channel.id, 0)
             self.set_channel_rankability(ctx.channel.id, True)
-            self.channels.append(str(ctx.channel.id))
             await ctx.reply("Channel has been added!")
         if operator == "remove":
             if not await self.channel_check(ctx): return
-            os.remove("channels/" + str(ctx.channel.id))
-            os.remove("highscores/" + str(ctx.channel.id))
+            db.remove_channel(ctx.channel.id)
+            db.remove_channel_highscore(ctx.channel.id)
             try:
-                os.remove("streakrankability/" + str(ctx.channel.id))
-            except FileNotFoundError:
+                db.remove_streak_rankability(ctx.channel.id)
+            except Exception:
                 pass
             self.reset_config(ctx.channel.id)
-            self.channels.remove(str(ctx.channel.id))
             await ctx.reply("Channel has been removed!")
         if operator == "set":
-            with open("channels/" + str(ctx.channel.id), "w") as file:
-                file.write(str(value) + "|0")
             if not await self.channel_check(ctx): return
             settings = self.get_channel_settings(ctx.channel.id)
             try:
                 estimatedSteps = int((value - settings["StartingNumber"]) / settings["Step"])
-            except:
+            except Exception:
                 estimatedSteps = 0
             self.set_channel_data(ctx.channel.id, value, 0, estimatedSteps)
             self.set_channel_rankability(ctx.channel.id, False)
