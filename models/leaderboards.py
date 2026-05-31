@@ -1,11 +1,7 @@
-from typing import List
 from typing import Optional
-from sqlalchemy import ForeignKey, Integer
-from sqlalchemy import String
-from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy import Integer, String
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
-from sqlalchemy.orm import relationship
 
 from models.base import Base
 
@@ -13,8 +9,11 @@ from models.base import Base
 class Leaderboards(Base):
     __tablename__ = 'leaderboards'
 
-    serverID: Mapped[str] = mapped_column(primary_key=True)
-    score: Mapped[int] = mapped_column(Integer(100))
+    serverID: Mapped[Optional[str]] = mapped_column(String(64), name='serverID')
+    channelID: Mapped[str] = mapped_column(String(64), primary_key=True)
+    name: Mapped[Optional[str]] = mapped_column(String(255), default='')
+    guildname: Mapped[Optional[str]] = mapped_column(String(255), default='')
+    score: Mapped[int] = mapped_column(Integer, default=0)
 
     def __repr__(self) -> str:
-        return f"Leaderboards(serverID={self.serverID!r}, score={self.score})"
+        return f"Leaderboards(channelID={self.channelID!r}, score={self.score})"
