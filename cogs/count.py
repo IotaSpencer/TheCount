@@ -57,18 +57,25 @@ class CountingCog(commands.Cog):
                 ]
             }
         )
-        del self.evaluator.nodes[ast.BoolOp]
-        del self.evaluator.nodes[ast.IfExp]
-        del self.evaluator.nodes[ast.Attribute]
-        del self.evaluator.nodes[ast.Index]
-        del self.evaluator.nodes[ast.Slice]
-        del self.evaluator.nodes[ast.FormattedValue]
-        del self.evaluator.nodes[ast.JoinedStr]
-        del self.evaluator.nodes[ast.Subscript]
-        del self.evaluator.nodes[ast.Assign]
-        del self.evaluator.nodes[ast.AugAssign]
+        # tighten evaluator: remove dangerous/unsupported AST nodes (guarded)
+        nodes_map = getattr(getattr(self, "evaluator", None), "nodes", None)
+        if isinstance(nodes_map, dict):
+            forbidden_names = [
+                "BoolOp", "IfExp", "Attribute", "Index", "Slice",
+                "FormattedValue", "JoinedStr", "Subscript",
+                "Assign", "AugAssign"
+            ]
+            for name in forbidden_names:
+                node = getattr(ast, name, None)
+                if node is not None:
+                    nodes_map.pop(node, None)
+
         simpleeval.MAX_POWER = 400000  # Lowered by 10x
-        sys.set_int_max_str_digits(1024)
+        if hasattr(sys, "set_int_max_str_digits"):
+            try:
+                sys.set_int_max_str_digits(1024)
+            except Exception:
+                pass
 
     def is_channel_registered(self, channelid):
         return db.is_channel_registered(channelid)
