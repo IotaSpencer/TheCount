@@ -3,6 +3,7 @@ import os
 import sys
 from pathlib import Path
 import argparse
+from typing import Any
 from urllib.parse import quote_plus
 
 
@@ -46,6 +47,10 @@ def find_venv_python():
 
 # If required packages are missing and we're not in a venv, try to re-exec with repo venv python
 missing = []
+# Predefine optional imports so static analyzers don't report 'possibly unbound'
+yaml: Any = None
+create_engine: Any = None
+text: Any = None
 try:
     import yaml  # PyYAML
 except Exception:
@@ -121,17 +126,19 @@ def main():
     tried = []
     if not db_url:
         # CLI --config
-        if args.config:
+        if args.config is not None:
             p = Path(args.config).expanduser()
             tried.append(str(p))
             if p.exists():
                 db_url = load_db_url_from_yaml(p)
         # env override
-        if not db_url and os.environ.get('COUNTING_CONFIG'):
-            p = Path(os.environ.get('COUNTING_CONFIG')).expanduser()
-            tried.append(str(p))
-            if p.exists():
-                db_url = load_db_url_from_yaml(p)
+        if not db_url:
+            env_config = os.environ.get('COUNTING_CONFIG')
+            if env_config is not None:
+                p = Path(env_config).expanduser()
+                tried.append(str(p))
+                if p.exists():
+                    db_url = load_db_url_from_yaml(p)
         # user home location
         if not db_url:
             for name in ('config.yml', 'config.yaml'):
