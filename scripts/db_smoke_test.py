@@ -63,7 +63,7 @@ def run_test() -> int:
             print('Read StreakRankability:', got_sr)
 
             # Update
-            got_c.current_count = 99
+            got_c.current_count = 99 # type: ignore
             if got_h:
                 got_h.score = 150
             if got_lb:

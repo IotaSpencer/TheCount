@@ -351,9 +351,27 @@ class CountingCog(commands.Cog):
         result = int(input, 2)
         return result
 
+    @bridge.bridge_command()
+    async def legend(self, ctx: bridge.BridgeExtContext | bridge.BridgeApplicationContext):
+        await ctx.reply("""
+        `###` are any numbers/digits
+        `b|###` - Binary input (b|101 = 5)
+        `2*2` - Expression evaluation
+        `w|expression` - WolframAlpha query (disabled)
+        `###` - Regular counting by integer or float 
+        """, ephemeral=True)
 
+    @bridge.bridge_command()
+    async def binary(self, ctx: bridge.BridgeExtContext | bridge.BridgeApplicationContext, bin_input):
+        result = self.parse_and_convert_binary(bin_input)
+        if ctx.__class__.__name__ == "BridgeApplicationContext":
+            await ctx.reply(f"'{bin_input}' (base2) is '{result}' (base10)", ephemeral=True)
+        elif ctx.__class__.__name__ == "BridgeExtContext":
+            await ctx.reply(f"'{bin_input}' (base2) is '{result}' (base10)")
+
+    
     @bridge.bridge_command(aliases=['chans'])
-    async def chan(self, ctx, operator, value=0):
+    async def chan(self, ctx: bridge.BridgeExtContext | bridge.BridgeApplicationContext, operator, value=0):
         """Perform operations on this channel
         Possible operators are:
         Add
@@ -365,9 +383,9 @@ class CountingCog(commands.Cog):
             if self.is_channel_registered(ctx.channel.id):
                 await ctx.reply("Channel has already been added!")
                 return
-            self.set_channel_data(ctx.channel.id, 0, 0, 0)
-            self.set_channel_highscore(ctx.channel.id, 0)
-            self.set_channel_rankability(ctx.channel.id, True)
+            self.set_channel_data(ctx.channel.id, 0, 0, 0) # pyright: ignore[reportOptionalMemberAccess]
+            self.set_channel_highscore(ctx.channel.id, 0) # pyright: ignore[reportOptionalMemberAccess]
+            self.set_channel_rankability(ctx.channel.id, True) # pyright: ignore[reportOptionalMemberAccess]
             await ctx.reply("Channel has been added!")
         if operator == "remove":
             if not await self.channel_check(ctx): return
