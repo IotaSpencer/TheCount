@@ -1,25 +1,26 @@
-from typing import List
 from typing import Optional
-from sqlalchemy import ForeignKey, Integer, Table
-from sqlalchemy import String
-from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy import Float, Integer, String
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
-from sqlalchemy.orm import relationship
 
-from models.base import Base, engine
+from models.base import Base
 
 
 class Settings(Base):
-    __table__ = Table(
-        'settings',
-        Base.metadata,
-        autoload_with=engine
-    )
     __tablename__ = 'settings'
 
-    serverID: Mapped[str] = mapped_column(String(64))
     channelID: Mapped[str] = mapped_column(String(64), primary_key=True)
-    current_count: Mapped[int] = mapped_column(Integer(100))
+
+    # Map model attributes to the existing snake_case DB column names
+    Step: Mapped[float] = mapped_column(Float, name='step', default=1)
+    StartingNumber: Mapped[float] = mapped_column(Float, name='starting_number', default=0)
+
+    EnableWolframAlpha: Mapped[int] = mapped_column(Integer, name='enable_wa', default=0)
+    EnableBinary: Mapped[int] = mapped_column(Integer, name='enable_binary', default=1)
+    EnableExpressions: Mapped[int] = mapped_column(Integer, name='enable_expr', default=1)
+    RoundAllGuesses: Mapped[int] = mapped_column(Integer, name='round_guesses', default=0)
+    AllowSingleUserCount: Mapped[int] = mapped_column(Integer, name='enable_single_user_count', default=0)
+    ForceIntegerConversions: Mapped[int] = mapped_column(Integer, name='force_integer', default=1)
+
     def __repr__(self) -> str:
-        return f"Settings(serverID={self.serverID!r}, channelID={self.channelID}, current_count={self.current_count})"
+        return f"Settings(channelID={self.channelID})"
