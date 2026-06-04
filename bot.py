@@ -18,22 +18,13 @@ client = Bot(command_prefix="cb!", intents=intents)
 startup_extensions = [ 'cogs.count']
 
 
-async def on_ready():
-    pass
-
 
 @client.event
 async def on_ready():
     await client.change_presence(activity=Game(name='a counting game. | cb!'))
     logger.info('---\nLogged in as \nUser: ' + client.user.name + '\nID: ' + str(client.user.id) + '\n---')
 
-# Under maintenance auto-reply
-
-
-
 # load cogs
-
-
 @client.command()
 async def load(ctx, string):
     if ctx.author.id not in Cfg().bot_config.bot.owner_ids: return
