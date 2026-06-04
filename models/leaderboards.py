@@ -16,4 +16,4 @@ class Leaderboards(Base):
     score: Mapped[int] = mapped_column(Integer, default=0)
 
     def __repr__(self) -> str:
-        return f"Leaderboards(channelID={self.channelID!r}, score={self.score})"
+        return f"Leaderboards(channelID={self.channelID!r}, score={self.score}, name={self.name!r}, guildname={self.guildname!r}, serverID={self.serverID!r})"
