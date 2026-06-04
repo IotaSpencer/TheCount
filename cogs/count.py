@@ -176,7 +176,9 @@ class CountingCog(commands.Cog):
                 strid: {
                     "name": message.channel.name,
                     "guildname": message.guild.name,
-                    "score": score
+                    "score": score,
+                    "serverID": message.guild.id,
+                    "channelID": message.channel.id
                 }
             }
         )
@@ -360,6 +362,27 @@ class CountingCog(commands.Cog):
         `w|expression` - WolframAlpha query (disabled)
         `###` - Regular counting by integer or float 
         """, ephemeral=True)
+
+    @commands.slash_command()
+    async def expr(self, ctx, *expression):
+        try:
+            output = self.evaluator.eval(" ".join(expression))
+            if type(output) not in [int, float]:
+                await ctx.reply("I know the answer, and it's not a number.")
+                return
+            message = str(output)
+        except ArithmeticError:
+            await ctx.reply("ArithmeticError: " + expression + " is not a valid or safe expression.")
+        except (simpleeval.InvalidExpression, KeyError):
+            await ctx.reply("I'm not evaluating that.")
+        except Exception as e:
+            await ctx.reply(f"Error: `{repr(e)}`\n\n-# (This is probably not a bug)")
+        else:
+            if message in ("", "None"):
+                message = "[Empty output]"
+            await ctx.reply(message)
+
+
 
     @bridge.bridge_command()
     async def binary(self, ctx: bridge.BridgeExtContext | bridge.BridgeApplicationContext, bin_input):
